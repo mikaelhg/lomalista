@@ -9,23 +9,25 @@ authentication or authorization: the unguessable URL is the only access control.
   (plus the season window dates). Do not add other personal data, titles, free text, IPs, or analytics.
 - Never log document IDs or request paths. Keep `Referrer-Policy: no-referrer` and the CSP.
 - Name rules live in two places and must stay in sync:
-  `backend/src/validation.rs` (authoritative) and `frontend/src/validation.ts` (UX mirror).
+  `backend/src/validation.rs` (authoritative) and `frontend/src/lib/validation.ts` (UX mirror).
 - XSS: names can only be Nordic letters, so markup is never stored. Never use `dangerouslySetInnerHTML`,
-  `innerHTML`, `eval` or dynamic `href`s (`frontend/src/xss.test.tsx` scans for them). Keep the CSP free of
-  `unsafe-inline` for scripts. Hostile-input tests: `backend/tests/xss.rs`, `frontend/src/xss.test.tsx`;
+  `innerHTML`, `eval` or dynamic `href`s (`frontend/src/tests/xss.test.tsx` scans for them). Keep the CSP free of
+  `unsafe-inline` for scripts. Hostile-input tests: `backend/tests/xss.rs`, `frontend/src/tests/xss.test.tsx`;
   add new payloads there when touching validation.
 - Archived documents are read-only (mutations return 409).
 
 ## Layout
 - `backend/` – Rust (axum, rusqlite/SQLite). `src/validation.rs` rules, `src/store.rs` DB + archiver,
   `src/api.rs` routes/headers, `tests/api.rs` integration tests.
-- `frontend/` – pnpm, rsbuild, React, TypeScript, TanStack Query (5 s polling). UI strings in `src/i18n.ts`
-  (en/fi/sv; add every key to all three).
+- `frontend/` – pnpm, rsbuild, React, TypeScript, Tailwind CSS v4, TanStack Query (5 s polling). `src/app/` shell,
+  `src/pages/` routes, `src/components/` UI (shared Tailwind class helpers in `ui.tsx`), `src/lib/` api, dates,
+  validation, navigation, i18n (`i18n.ts`: en/fi/sv; add every key to all three), `src/styles/` Tailwind theme
+  tokens (light/dark), `src/tests/` tests.
 
 ## Commands
 - Backend: `cd backend && cargo test && cargo clippy --all-targets -- -D warnings`; run with `cargo run`
   (env: `LOMALISTA_DB`, `LOMALISTA_BIND`, `LOMALISTA_STATIC_DIR`, `LOMALISTA_RETENTION_DAYS`).
-- Frontend: `cd frontend && pnpm test && pnpm typecheck && pnpm build`; dev server `pnpm dev`
+- Frontend: `cd frontend && pnpm test && pnpm typecheck && pnpm lint && pnpm build`; `pnpm lint:fix` formats and fixes with Biome (`biome.json`); dev server `pnpm dev`
   (proxies `/api` to 127.0.0.1:3000).
 
 ## Running processes (servers, watchers, anything long-lived)

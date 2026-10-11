@@ -2,9 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import type { Doc } from './api';
-import { Timeline } from './Timeline';
-import { nameError } from './validation';
+import { Timeline } from '../components/Timeline';
+import type { Doc } from '../lib/api';
+import { nameError } from '../lib/validation';
 
 const PAYLOADS = [
   '<script>alert(1)</script>',
@@ -31,7 +31,15 @@ describe('name validation (XSS)', () => {
 
 describe('name validation (Unicode)', () => {
   it('rejects look-alikes and non-ASCII separators', () => {
-    for (const n of ['\u0430nna', 'Ann\u03b1', '\uFF21nna', '\uFB01na', 'Anna\u00A0B', 'Anna\u2010B', '\u0131da']) {
+    for (const n of [
+      '\u0430nna',
+      'Ann\u03b1',
+      '\uFF21nna',
+      '\uFB01na',
+      'Anna\u00A0B',
+      'Anna\u2010B',
+      '\u0131da',
+    ]) {
       expect(nameError(n), JSON.stringify(n)).toBe('name_chars');
     }
   });
@@ -79,7 +87,7 @@ describe('source hygiene', () => {
       else if (/\.(ts|tsx)$/.test(e.name) && !/\.test\.tsx?$/.test(e.name)) files.push(p);
     }
   };
-  walk(join(import.meta.dirname));
+  walk(join(import.meta.dirname, '..'));
 
   it('has source files to scan', () => expect(files.length).toBeGreaterThan(5));
 

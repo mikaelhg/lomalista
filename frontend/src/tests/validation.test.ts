@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { addDays, defaultSeason, isoWeek, parseDate, formatDate } from './dates';
-import { nameError } from './validation';
+import { addDays, defaultSeason, formatDate, isoWeek, parseDate } from '../lib/dates';
+import { nameError } from '../lib/validation';
 
 describe('nameError', () => {
   it('accepts Nordic names', () => {

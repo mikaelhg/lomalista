@@ -1,5 +1,13 @@
-export interface Vacation { id: number; start: string; end: string }
-export interface Person { id: number; name: string; vacations: Vacation[] }
+export interface Vacation {
+  id: number;
+  start: string;
+  end: string;
+}
+export interface Person {
+  id: number;
+  name: string;
+  vacations: Vacation[];
+}
 export interface Doc {
   season_start: string;
   season_end: string;
@@ -8,7 +16,10 @@ export interface Doc {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, public code: string) {
+  constructor(
+    public status: number,
+    public code: string,
+  ) {
     super(code);
   }
 }
@@ -37,3 +48,7 @@ export const api = {
   deleteVacation: (id: string, pid: number, vid: number) =>
     req<void>('DELETE', `/docs/${id}/people/${pid}/vacations/${vid}`),
 };
+
+export function errCode(e: unknown): string {
+  return e instanceof ApiError ? e.code : 'internal';
+}

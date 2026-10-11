@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #fafaf7;
+  --fg: #1d2330;
+  --muted: #5d6677;
+  --card: #fff;
+  --line: #d9dce3;
+  --accent: #1f6f8b;
+  --accent-fg: #fff;
+  --bar: #6aa9bf;
+  --bar-mine: #1f6f8b;
+  --warn: #e0883a;
+  --err: #b3261e;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171d;
+    --fg: #e8eaf0;
+    --muted: #a0a8b8;
+    --card: #1d2129;
+    --line: #343a47;
+    --accent: #5ab4d1;
+    --accent-fg: #0b1a20;
+    --bar: #3d7387;
+    --bar-mine: #5ab4d1;
+    --warn: #e0883a;
+    --err: #ff8a80;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-card: var(--card);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-bar: var(--bar);
+  --color-bar-mine: var(--bar-mine);
+  --color-warn: var(--warn);
+  --color-err: var(--err);
+  --font-sans: system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-bg text-fg font-sans text-base leading-normal;
+  }
+  ul {
+    @apply list-none p-0 m-0;
+  }
+  input {
+    @apply max-w-full rounded-md border border-line bg-bg p-2 text-fg;
+    font: inherit;
+  }
+  button {
+    font: inherit;
+  }
+  :focus-visible {
+    @apply outline-[3px] outline-offset-2 outline-accent;
+  }
+}

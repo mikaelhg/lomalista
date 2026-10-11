@@ -1,17 +1,13 @@
-import { useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { DocPage } from './DocPage';
-import { Landing } from './Landing';
-import { t } from './i18n';
+import { useEffect, useState } from 'react';
+import { t } from '../lib/i18n';
+import { navigate } from '../lib/navigate';
+import { DocPage } from '../pages/DocPage';
+import { Landing } from '../pages/Landing';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: true } },
 });
-
-export function navigate(path: string) {
-  history.pushState(null, '', path);
-  window.dispatchEvent(new PopStateEvent('popstate'));
-}
 
 export function App() {
   const [path, setPath] = useState(location.pathname);
@@ -24,12 +20,21 @@ export function App() {
   const m = /^\/d\/([A-Za-z0-9_-]{1,64})\/?$/.exec(path);
   return (
     <QueryClientProvider client={queryClient}>
-      <main>
-        <header className="site">
-          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/'); }}>lomalista</a>
+      <main className="mx-auto max-w-[60rem] px-4 pb-8">
+        <header className="py-4 text-xl font-bold">
+          <a
+            className="text-fg no-underline"
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/');
+            }}
+          >
+            lomalista
+          </a>
         </header>
         {m ? <DocPage key={m[1]} id={m[1]} /> : <Landing />}
-        <footer>{t('stored')}</footer>
+        <footer className="mt-8 text-[.875rem] text-muted">{t('stored')}</footer>
       </main>
     </QueryClientProvider>
   );

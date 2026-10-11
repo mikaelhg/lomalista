@@ -1,11 +1,13 @@
 const en = {
-  tagline: 'Shared vacation lists for your team. No sign-up: share the link and everyone adds their own dates.',
+  tagline:
+    'Shared vacation lists for your team. No sign-up: share the link and everyone adds their own dates.',
   createTitle: 'Create a vacation list',
   seasonStart: 'Season starts',
   seasonEnd: 'Season ends',
   create: 'Create list',
   shareTitle: 'Your list is ready',
-  shareWarn: 'Anyone with this link can view and edit the list. Share it only with your team. The list becomes read-only two weeks after the season ends.',
+  shareWarn:
+    'Anyone with this link can view and edit the list. Share it only with your team. The list becomes read-only two weeks after the season ends.',
   copy: 'Copy link',
   copied: 'Copied!',
   open: 'Open the list',
@@ -55,7 +57,8 @@ const fi: Dict = {
   seasonEnd: 'Kausi päättyy',
   create: 'Luo lista',
   shareTitle: 'Listasi on valmis',
-  shareWarn: 'Kuka tahansa linkin tietävä voi nähdä ja muokata listaa. Jaa se vain tiimillesi. Lista muuttuu vain luettavaksi kaksi viikkoa kauden päättymisen jälkeen.',
+  shareWarn:
+    'Kuka tahansa linkin tietävä voi nähdä ja muokata listaa. Jaa se vain tiimillesi. Lista muuttuu vain luettavaksi kaksi viikkoa kauden päättymisen jälkeen.',
   copy: 'Kopioi linkki',
   copied: 'Kopioitu!',
   open: 'Avaa lista',
@@ -80,7 +83,8 @@ const fi: Dict = {
   stored: 'Vain nimet ja päivämäärät tallennetaan.',
   err_name_empty: 'Anna nimi.',
   err_name_too_long: 'Nimi voi olla enintään 15 merkkiä.',
-  err_name_chars: 'Käytä vain kirjaimia (pohjoismaiset kirjaimet käyvät); sanojen välissä yksi väli tai tavuviiva.',
+  err_name_chars:
+    'Käytä vain kirjaimia (pohjoismaiset kirjaimet käyvät); sanojen välissä yksi väli tai tavuviiva.',
   err_name_taken: 'Nimi on jo listalla.',
   err_range_order: 'Loppupäivä on ennen alkupäivää.',
   err_range_outside_season: 'Päivien on oltava kauden sisällä.',
@@ -97,13 +101,15 @@ const fi: Dict = {
 };
 
 const sv: Dict = {
-  tagline: 'Gemensam semesterlista för ditt team. Ingen registrering: dela länken så lägger alla in sina egna datum.',
+  tagline:
+    'Gemensam semesterlista för ditt team. Ingen registrering: dela länken så lägger alla in sina egna datum.',
   createTitle: 'Skapa en semesterlista',
   seasonStart: 'Säsongen börjar',
   seasonEnd: 'Säsongen slutar',
   create: 'Skapa lista',
   shareTitle: 'Din lista är klar',
-  shareWarn: 'Alla som har länken kan se och ändra listan. Dela den bara med ditt team. Listan blir skrivskyddad två veckor efter säsongens slut.',
+  shareWarn:
+    'Alla som har länken kan se och ändra listan. Dela den bara med ditt team. Listan blir skrivskyddad två veckor efter säsongens slut.',
   copy: 'Kopiera länk',
   copied: 'Kopierad!',
   open: 'Öppna listan',
@@ -128,7 +134,8 @@ const sv: Dict = {
   stored: 'Endast namn och datum sparas.',
   err_name_empty: 'Ange ett namn.',
   err_name_too_long: 'Namnet får vara högst 15 tecken.',
-  err_name_chars: 'Använd endast bokstäver (nordiska bokstäver går bra), med enstaka mellanslag eller bindestreck emellan.',
+  err_name_chars:
+    'Använd endast bokstäver (nordiska bokstäver går bra), med enstaka mellanslag eller bindestreck emellan.',
   err_name_taken: 'Namnet finns redan i listan.',
   err_range_order: 'Slutdatumet är före startdatumet.',
   err_range_outside_season: 'Datumen måste ligga inom säsongen.',
