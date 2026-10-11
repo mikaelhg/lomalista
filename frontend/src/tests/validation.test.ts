@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from '@rstest/core';
 import { addDays, defaultSeason, formatDate, isoWeek, parseDate } from '../lib/dates';
 import { nameError } from '../lib/validation';
 
