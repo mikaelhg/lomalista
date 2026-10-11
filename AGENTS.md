@@ -27,7 +27,7 @@ authentication or authorization: the unguessable URL is the only access control.
 ## Commands
 - Backend: `cd backend && cargo test && cargo clippy --all-targets -- -D warnings`; run with `cargo run`
   (env: `LOMALISTA_DB`, `LOMALISTA_BIND`, `LOMALISTA_STATIC_DIR`, `LOMALISTA_RETENTION_DAYS`).
-- Frontend: `cd frontend && pnpm test && pnpm typecheck && pnpm check && pnpm build`; `pnpm check:fix` formats and fixes with Biome (`biome.json`); CI uses `pnpm ci:lint` and `pnpm ci:typecheck`; the pnpm and Node versions are pinned in `package.json`; dev server `pnpm dev`
+- Frontend: `cd frontend && pnpm test && pnpm typecheck && pnpm check && pnpm build`; `pnpm check:fix` formats and fixes with Biome (`biome.json`); CI uses `pnpm ci:lint` and `pnpm ci:typecheck`; Node and pnpm versions are pinned in `mise.toml` (run `mise install`); dev server `pnpm dev`
   (proxies `/api` to 127.0.0.1:3000).
 
 ## Running processes (servers, watchers, anything long-lived)
