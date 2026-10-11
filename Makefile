@@ -30,7 +30,7 @@ test-backend:
 	cd backend && cargo test
 
 test-frontend:
-	cd frontend && pnpm test && pnpm typecheck && pnpm lint
+	cd frontend && pnpm test && pnpm typecheck && pnpm check
 
 lint:
 	cd backend && cargo clippy --all-targets -- -D warnings

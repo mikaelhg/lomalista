@@ -22,12 +22,12 @@ authentication or authorization: the unguessable URL is the only access control.
 - `frontend/` – pnpm, rsbuild, React, TypeScript, Tailwind CSS v4, TanStack Query (5 s polling). `src/app/` shell,
   `src/pages/` routes, `src/components/` UI (shared Tailwind class helpers in `ui.tsx`), `src/lib/` api, dates,
   validation, navigation, i18n (`i18n.ts`: en/fi/sv; add every key to all three), `src/styles/` Tailwind theme
-  tokens (light/dark), `src/tests/` tests.
+  tokens (light/dark), `src/tests/` tests (rstest, happy-dom, Testing Library).
 
 ## Commands
 - Backend: `cd backend && cargo test && cargo clippy --all-targets -- -D warnings`; run with `cargo run`
   (env: `LOMALISTA_DB`, `LOMALISTA_BIND`, `LOMALISTA_STATIC_DIR`, `LOMALISTA_RETENTION_DAYS`).
-- Frontend: `cd frontend && pnpm test && pnpm typecheck && pnpm lint && pnpm build`; `pnpm lint:fix` formats and fixes with Biome (`biome.json`); dev server `pnpm dev`
+- Frontend: `cd frontend && pnpm test && pnpm typecheck && pnpm check && pnpm build`; `pnpm check:fix` formats and fixes with Biome (`biome.json`); CI uses `pnpm ci:lint` and `pnpm ci:typecheck`; the pnpm and Node versions are pinned in `package.json`; dev server `pnpm dev`
   (proxies `/api` to 127.0.0.1:3000).
 
 ## Running processes (servers, watchers, anything long-lived)

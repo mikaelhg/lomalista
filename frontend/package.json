@@ -8,8 +8,12 @@
     "build": "rsbuild build",
     "typecheck": "tsc --noEmit",
     "test": "rstest run",
-    "lint": "biome check",
-    "lint:fix": "biome check --write"
+    "check": "biome check src",
+    "check:fix": "biome check src --fix",
+    "biome:upgrade": "biome migrate --write",
+    "ci:lint": "biome ci src",
+    "ci:typecheck": "tsc --noEmit",
+    "update:packageManager": "corepack use pnpm@latest"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",
@@ -23,11 +27,23 @@
     "@rstest/adapter-rsbuild": "^0.12.3",
     "@rstest/core": "^0.12.3",
     "@tailwindcss/postcss": "^4.3.3",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "happy-dom": "^20.14.6",
     "postcss": "^8.5.29",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2"
+  },
+  "packageManager": "pnpm@12.10.1",
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^24.21.0",
+      "onFail": "download"
+    }
   }
 }
