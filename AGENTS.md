@@ -42,3 +42,7 @@ kill "$(cat "$TMP/lomalista.pid")" && rm -f "$TMP/lomalista.pid"
 ```
 Use the session scratchpad or another temp directory (not the repo) for the PID and log files. Always stop
 what you started before finishing, and never kill a process you did not start.
+
+## Git
+Merge branches into `main` with a rebase-style merge (rebase onto `main`, then fast-forward). Never create
+merge commits.
