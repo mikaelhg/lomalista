@@ -12,7 +12,8 @@
     "check:fix": "biome check src --fix",
     "biome:upgrade": "biome migrate --write",
     "ci:lint": "biome ci src",
-    "ci:typecheck": "tsc --noEmit"
+    "ci:typecheck": "tsc --noEmit",
+    "update:packageManager": "corepack use pnpm@latest"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",
@@ -36,5 +37,6 @@
     "postcss": "^8.5.29",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2"
-  }
+  },
+  "packageManager": "pnpm@12.10.1"
 }
