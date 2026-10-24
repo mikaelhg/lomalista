@@ -12,8 +12,8 @@ concurrency:
 
 jobs:
   backend:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
     env:
       CARGO_TERM_COLOR: always
     defaults:
@@ -33,7 +33,7 @@ jobs:
       - run: cargo clippy --all-targets --locked -- -D warnings
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     defaults:
       run:
