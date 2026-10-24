@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, MouseEvent, ReactNode } from 'react';
+import { navigate } from '../lib/navigate';
 
 export const card = (mine = false) =>
   `my-4 rounded-lg border bg-card p-4 ${mine ? 'border-accent' : 'border-line'}`;
@@ -33,6 +34,12 @@ export function Field({ label, children }: { label: string; children: ReactNode 
       {children}
     </label>
   );
+}
+
+/** Click handler for links to this app's own pages (with literal hrefs): navigates without a reload. */
+export function appNav(e: MouseEvent<HTMLAnchorElement>) {
+  e.preventDefault();
+  navigate(e.currentTarget.pathname);
 }
 
 export const errorText = 'my-2 text-err';

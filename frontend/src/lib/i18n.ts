@@ -1,8 +1,19 @@
 const en = {
   tagline:
     'Shared vacation lists for your team. No sign-up: share the link and everyone adds their own dates.',
-  createTitle: 'Create a vacation list',
   listTitle: 'Vacation list',
+  heroTitle: "Plan your team's vacations together",
+  howTitle: 'How it works',
+  step1Title: 'Create a list',
+  step1: 'One click gives you a new list with its own private link.',
+  step2Title: 'Share the link',
+  step2: 'Send it to your team, for example in your team chat. The link is the only key to the list.',
+  step3Title: 'Add your dates',
+  step3: 'Everyone adds their own name and vacation dates. The timeline shows who is away and when.',
+  featNoSignup: 'No accounts or passwords',
+  featOverlap: 'See at a glance how many are away each day',
+  featPrivacy: 'Only names and dates are stored, and old lists are deleted automatically',
+  privacyLink: 'Privacy policy',
   create: 'Create list',
   shareTitle: 'Your list is ready',
   shareWarn:
@@ -51,8 +62,19 @@ export type Dict = typeof en;
 
 const fi: Dict = {
   tagline: 'Yhteinen lomalista tiimille. Ei rekisteröitymistä: jaa linkki ja jokainen lisää omat päivänsä.',
-  createTitle: 'Luo lomalista',
   listTitle: 'Lomalista',
+  heroTitle: 'Suunnitelkaa tiimin lomat yhdessä',
+  howTitle: 'Näin se toimii',
+  step1Title: 'Luo lista',
+  step1: 'Yhdellä napsautuksella saat uuden listan ja sille oman yksityisen linkin.',
+  step2Title: 'Jaa linkki',
+  step2: 'Lähetä se tiimillesi esimerkiksi tiimin chatissa. Linkki on listan ainoa avain.',
+  step3Title: 'Lisää lomasi',
+  step3: 'Jokainen lisää oman nimensä ja lomapäivänsä. Aikajanalta näkee, kuka on poissa ja milloin.',
+  featNoSignup: 'Ei käyttäjätunnuksia eikä salasanoja',
+  featOverlap: 'Näet yhdellä silmäyksellä, montako on lomalla kunakin päivänä',
+  featPrivacy: 'Vain nimet ja päivämäärät tallennetaan, ja vanhat listat poistetaan automaattisesti',
+  privacyLink: 'Tietosuojaseloste',
   create: 'Luo lista',
   shareTitle: 'Listasi on valmis',
   shareWarn:
@@ -101,8 +123,19 @@ const fi: Dict = {
 const sv: Dict = {
   tagline:
     'Gemensam semesterlista för ditt team. Ingen registrering: dela länken så lägger alla in sina egna datum.',
-  createTitle: 'Skapa en semesterlista',
   listTitle: 'Semesterlista',
+  heroTitle: 'Planera teamets semestrar tillsammans',
+  howTitle: 'Så fungerar det',
+  step1Title: 'Skapa en lista',
+  step1: 'Med ett klick får du en ny lista med en egen privat länk.',
+  step2Title: 'Dela länken',
+  step2: 'Skicka den till ditt team, till exempel i teamets chatt. Länken är den enda nyckeln till listan.',
+  step3Title: 'Lägg in dina datum',
+  step3: 'Alla lägger in sitt eget namn och sina semesterdatum. Tidslinjen visar vem som är borta och när.',
+  featNoSignup: 'Inga konton eller lösenord',
+  featOverlap: 'Se direkt hur många som är lediga varje dag',
+  featPrivacy: 'Endast namn och datum sparas, och gamla listor raderas automatiskt',
+  privacyLink: 'Dataskyddsbeskrivning',
   create: 'Skapa lista',
   shareTitle: 'Din lista är klar',
   shareWarn:
