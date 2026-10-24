@@ -2,8 +2,7 @@ const en = {
   tagline:
     'Shared vacation lists for your team. No sign-up: share the link and everyone adds their own dates.',
   createTitle: 'Create a vacation list',
-  seasonStart: 'Season starts',
-  seasonEnd: 'Season ends',
+  season: 'Season',
   create: 'Create list',
   shareTitle: 'Your list is ready',
   shareWarn:
@@ -18,11 +17,12 @@ const en = {
   add: 'Add',
   noPeople: 'Nobody has added their vacation yet.',
   addRange: 'Add vacation',
-  from: 'From',
-  to: 'To',
+  dates: 'Vacation dates',
   remove: 'Remove',
   removePerson: 'Remove person',
-  confirmOthers: 'This entry was not created in this browser. Remove it anyway?',
+  confirmOthers: 'This entry was not created in this browser. Change it anyway?',
+  cancel: 'Cancel',
+  proceed: 'Continue',
   mine: 'you',
   away: 'away',
   week: 'Week',
@@ -53,8 +53,7 @@ export type Dict = typeof en;
 const fi: Dict = {
   tagline: 'Yhteinen lomalista tiimille. Ei rekisteröitymistä: jaa linkki ja jokainen lisää omat päivänsä.',
   createTitle: 'Luo lomalista',
-  seasonStart: 'Kausi alkaa',
-  seasonEnd: 'Kausi päättyy',
+  season: 'Kausi',
   create: 'Luo lista',
   shareTitle: 'Listasi on valmis',
   shareWarn:
@@ -69,11 +68,12 @@ const fi: Dict = {
   add: 'Lisää',
   noPeople: 'Kukaan ei ole vielä lisännyt lomaansa.',
   addRange: 'Lisää loma',
-  from: 'Alkaa',
-  to: 'Päättyy',
+  dates: 'Lomapäivät',
   remove: 'Poista',
   removePerson: 'Poista henkilö',
-  confirmOthers: 'Tätä merkintää ei ole luotu tässä selaimessa. Poistetaanko silti?',
+  confirmOthers: 'Tätä merkintää ei ole luotu tässä selaimessa. Muutetaanko silti?',
+  cancel: 'Peruuta',
+  proceed: 'Jatka',
   mine: 'sinä',
   away: 'poissa',
   week: 'Viikko',
@@ -104,8 +104,7 @@ const sv: Dict = {
   tagline:
     'Gemensam semesterlista för ditt team. Ingen registrering: dela länken så lägger alla in sina egna datum.',
   createTitle: 'Skapa en semesterlista',
-  seasonStart: 'Säsongen börjar',
-  seasonEnd: 'Säsongen slutar',
+  season: 'Säsong',
   create: 'Skapa lista',
   shareTitle: 'Din lista är klar',
   shareWarn:
@@ -120,11 +119,12 @@ const sv: Dict = {
   add: 'Lägg till',
   noPeople: 'Ingen har lagt in sin semester än.',
   addRange: 'Lägg till semester',
-  from: 'Från',
-  to: 'Till',
+  dates: 'Semesterdatum',
   remove: 'Ta bort',
   removePerson: 'Ta bort person',
-  confirmOthers: 'Den här posten skapades inte i den här webbläsaren. Ta bort ändå?',
+  confirmOthers: 'Den här posten skapades inte i den här webbläsaren. Ändra ändå?',
+  cancel: 'Avbryt',
+  proceed: 'Fortsätt',
   mine: 'du',
   away: 'borta',
   week: 'Vecka',
@@ -162,6 +162,8 @@ export function detectLang(): string {
 }
 
 export const lang = detectLang();
+/** Full locale for date widgets: Nordic conventions (Monday first, day-month order) for English too. */
+export const locale = { en: 'en-GB', fi: 'fi-FI', sv: 'sv-SE' }[lang] ?? 'en-GB';
 const dict = dicts[lang];
 if (typeof document !== 'undefined') document.documentElement.lang = lang;
 

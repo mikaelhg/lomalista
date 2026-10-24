@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { AddPerson } from '../components/AddPerson';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PersonCard } from '../components/PersonCard';
 import { Timeline } from '../components/Timeline';
 import { Button, card } from '../components/ui';
@@ -12,6 +13,7 @@ import { navigate } from '../lib/navigate';
 export function DocPage({ id }: { id: string }) {
   const qc = useQueryClient();
   const [mine, setMine] = useState(() => loadMine(id));
+  const [pending, setPending] = useState<(() => void) | null>(null);
   const q = useQuery({
     queryKey: ['doc', id],
     queryFn: () => api.getDoc(id),
@@ -34,7 +36,8 @@ export function DocPage({ id }: { id: string }) {
   const d = (s: string) => fmt.format(new Date(`${s}T00:00:00Z`));
   const readOnly = doc.archived;
 
-  const confirmOthers = (pid: number) => mine.has(pid) || window.confirm(t('confirmOthers'));
+  const confirmOthers = (pid: number, action: () => void) =>
+    mine.has(pid) ? action() : setPending(() => action);
 
   return (
     <>
@@ -57,7 +60,7 @@ export function DocPage({ id }: { id: string }) {
             max={doc.season_end}
             format={d}
             onChange={refresh}
-            confirmEdit={() => confirmOthers(p.id)}
+            confirmEdit={(action) => confirmOthers(p.id, action)}
           />
         ))}
       </ul>
@@ -73,6 +76,14 @@ export function DocPage({ id }: { id: string }) {
           }}
         />
       )}
+      <ConfirmDialog
+        message={pending ? t('confirmOthers') : null}
+        onConfirm={() => {
+          pending?.();
+          setPending(null);
+        }}
+        onCancel={() => setPending(null)}
+      />
     </>
   );
 }

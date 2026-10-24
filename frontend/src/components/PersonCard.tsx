@@ -2,7 +2,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { api, errCode, type Person } from '../lib/api';
 import { t, tError } from '../lib/i18n';
-import { Button, card, errorText, Field } from './ui';
+import { DateRange, type Range } from './DateRange';
+import { Button, card, errorText } from './ui';
 
 interface Props {
   docId: string;
@@ -13,7 +14,8 @@ interface Props {
   max: string;
   format: (s: string) => string;
   onChange: () => void;
-  confirmEdit: () => boolean;
+  /** Runs `action`, asking first if this person was not created in this browser. */
+  confirmEdit: (action: () => void) => void;
 }
 
 export function PersonCard({
@@ -27,13 +29,11 @@ export function PersonCard({
   onChange,
   confirmEdit,
 }: Props) {
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [range, setRange] = useState<Range | null>(null);
   const add = useMutation({
-    mutationFn: () => api.addVacation(docId, person.id, from, to || from),
+    mutationFn: (r: Range) => api.addVacation(docId, person.id, r.start, r.end),
     onSuccess: () => {
-      setFrom('');
-      setTo('');
+      setRange(null);
       onChange();
     },
   });
@@ -57,7 +57,7 @@ export function PersonCard({
           <li key={v.id} className="py-[.15rem]">
             {v.start === v.end ? format(v.start) : `${format(v.start)} – ${format(v.end)}`}
             {!readOnly && (
-              <Button variant="link" onClick={() => confirmEdit() && delVac.mutate(v.id)}>
+              <Button variant="link" onClick={() => confirmEdit(() => delVac.mutate(v.id))}>
                 {t('remove')}
               </Button>
             )}
@@ -67,41 +67,27 @@ export function PersonCard({
       {!readOnly && (
         <>
           <form
-            className="flex flex-wrap items-end gap-3 [&_label]:mb-0"
+            className="flex flex-wrap items-end gap-3 [&>div]:mb-0"
             onSubmit={(e) => {
               e.preventDefault();
-              if (confirmEdit()) add.mutate();
+              const r = range;
+              if (r) confirmEdit(() => add.mutate(r));
             }}
           >
-            <Field label={t('from')}>
-              <input
-                type="date"
-                required
-                min={min}
-                max={max}
-                value={from}
-                onChange={(e) => {
-                  add.reset();
-                  setFrom(e.target.value);
-                  if (!to || to < e.target.value) setTo(e.target.value);
-                }}
-              />
-            </Field>
-            <Field label={t('to')}>
-              <input
-                type="date"
-                min={from || min}
-                max={max}
-                value={to}
-                onChange={(e) => {
-                  add.reset();
-                  setTo(e.target.value);
-                }}
-              />
-            </Field>
+            <DateRange
+              label={t('dates')}
+              required
+              min={min}
+              max={max}
+              value={range}
+              onChange={(r) => {
+                add.reset();
+                setRange(r);
+              }}
+            />
             <Button disabled={add.isPending}>{t('addRange')}</Button>
           </form>
-          <Button variant="danger" onClick={() => confirmEdit() && delPerson.mutate()}>
+          <Button variant="danger" onClick={() => confirmEdit(() => delPerson.mutate())}>
             {t('removePerson')}
           </Button>
         </>

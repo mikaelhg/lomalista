@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, rs } from '@rstest/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import type { Doc } from '../lib/api';
@@ -9,8 +9,10 @@ import { DocPage } from '../pages/DocPage';
 import { Landing } from '../pages/Landing';
 
 /** Minimal in-memory stand-in for the backend API. */
+let seed: Doc['people'] = [];
+
 function fakeApi() {
-  const doc: Doc = { season_start: '2027-06-01', season_end: '2027-08-31', archived: false, people: [] };
+  const doc: Doc = { season_start: '2027-06-01', season_end: '2027-08-31', archived: false, people: seed };
   let next = 1;
   const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -40,7 +42,16 @@ function renderWithQuery(ui: ReactNode) {
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 }
 
+/** Opens the range calendar and picks a single day (start and end). */
+async function pickDay(label: string) {
+  await userEvent.click(screen.getByRole('button', { name: /calendar/i }));
+  const day = () => screen.getByRole('button', { name: new RegExp(label) });
+  await userEvent.click(day());
+  await userEvent.click(day());
+}
+
 beforeEach(() => {
+  seed = [];
   rs.stubGlobal('fetch', fakeApi());
   localStorage.clear();
 });
@@ -67,8 +78,27 @@ describe('DocPage', () => {
     await userEvent.click(screen.getByRole('button', { name: t('add') }));
     expect(await screen.findByRole('heading', { name: /Åsa/ })).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText(t('from')), { target: { value: '2027-06-20' } });
+    await pickDay('20 June 2027');
     await userEvent.click(screen.getByRole('button', { name: t('addRange') }));
+    expect(await screen.findByRole('button', { name: t('remove') })).toBeInTheDocument();
+  });
+
+  it('asks before changing someone added in another browser', async () => {
+    seed.push({ id: 99, name: 'Erik', vacations: [] });
+    renderWithQuery(<DocPage id="abc" />);
+    await screen.findByRole('heading', { name: /Erik/ });
+
+    await pickDay('20 June 2027');
+    await userEvent.click(screen.getByRole('button', { name: t('addRange') }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent(t('confirmOthers'));
+
+    await userEvent.click(screen.getByRole('button', { name: t('cancel') }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: t('remove') })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: t('addRange') }));
+    await userEvent.click(await screen.findByRole('button', { name: t('proceed') }));
     expect(await screen.findByRole('button', { name: t('remove') })).toBeInTheDocument();
   });
 

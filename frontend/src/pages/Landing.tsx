@@ -1,6 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Button, card, errorText, Field } from '../components/ui';
+import type { Range } from '../components/DateRange';
+import { DateRange } from '../components/DateRange';
+import { Button, card, errorText } from '../components/ui';
 import { api, errCode } from '../lib/api';
 import { defaultSeason, todayLocal } from '../lib/dates';
 import { t, tError } from '../lib/i18n';
@@ -8,11 +10,10 @@ import { navigate } from '../lib/navigate';
 
 export function Landing() {
   const def = defaultSeason(todayLocal());
-  const [start, setStart] = useState(def.start);
-  const [end, setEnd] = useState(def.end);
+  const [season, setSeason] = useState<Range | null>(def);
   const [copied, setCopied] = useState(false);
 
-  const create = useMutation({ mutationFn: () => api.createDoc(start, end) });
+  const create = useMutation({ mutationFn: (s: Range) => api.createDoc(s.start, s.end) });
   const id = create.data?.id;
   const url = id ? `${location.origin}/d/${id}` : '';
 
@@ -54,15 +55,10 @@ export function Landing() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          create.mutate();
+          if (season) create.mutate(season);
         }}
       >
-        <Field label={t('seasonStart')}>
-          <input type="date" required value={start} onChange={(e) => setStart(e.target.value)} />
-        </Field>
-        <Field label={t('seasonEnd')}>
-          <input type="date" required value={end} min={start} onChange={(e) => setEnd(e.target.value)} />
-        </Field>
+        <DateRange label={t('season')} required value={season} onChange={setSeason} />
         <Button variant="primary" disabled={create.isPending}>
           {t('create')}
         </Button>
