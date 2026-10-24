@@ -62,8 +62,7 @@ async fn raw(app: &axum::Router, method: &str, uri: &str, body: Option<String>) 
 }
 
 async fn new_doc(app: &axum::Router) -> String {
-    let b = json!({"season_start":"2027-06-01","season_end":"2027-08-31"}).to_string();
-    let (_, _, body) = raw(app, "POST", "/api/docs", Some(b)).await;
+    let (_, _, body) = raw(app, "POST", "/api/docs", None).await;
     serde_json::from_str::<Value>(&body).unwrap()["id"].as_str().unwrap().to_string()
 }
 
@@ -107,8 +106,11 @@ async fn hostile_ids_are_not_reflected() {
 async fn hostile_dates_are_rejected() {
     let (app, _) = app();
     let id = new_doc(&app).await;
-    let (s, _, body) = raw(&app, "POST", "/api/docs",
-        Some(json!({"season_start":"<script>","season_end":"2027-08-31"}).to_string())).await;
+    let (_, _, body) = raw(&app, "POST", &format!("/api/docs/{id}/people"),
+        Some(json!({"name":"Anna"}).to_string())).await;
+    let pid = serde_json::from_str::<Value>(&body).unwrap()["id"].as_i64().unwrap();
+    let (s, _, body) = raw(&app, "POST", &format!("/api/docs/{id}/people/{pid}/vacations"),
+        Some(json!({"start":"<script>","end":"2027-08-31"}).to_string())).await;
     assert!(s.is_client_error(), "{s}");
     assert!(!body.contains("<script>"), "{body}");
     let (s, ..) = raw(&app, "POST", &format!("/api/docs/{id}/people/1/vacations"),

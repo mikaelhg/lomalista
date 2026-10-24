@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Doc } from '../lib/api';
-import { addDays, diffDays, formatDate, isoWeek, parseDate, weekday } from '../lib/dates';
+import { addDays, diffDays, formatDate, isoWeek, parseDate, vacationSpan, weekday } from '../lib/dates';
 import { lang, t } from '../lib/i18n';
 
 const DAY_W = 16;
@@ -10,9 +10,11 @@ const headLabel = 'absolute top-0 whitespace-nowrap pl-0.5';
 const rowBox = 'h-7 leading-7';
 
 export function Timeline({ doc, mine }: { doc: Doc; mine: Set<number> }) {
+  const span = useMemo(() => vacationSpan(doc.people.flatMap((p) => p.vacations)), [doc]);
   const { days, counts, weeks, months } = useMemo(() => {
-    const start = parseDate(doc.season_start);
-    const n = diffDays(start, parseDate(doc.season_end)) + 1;
+    if (!span) return { days: [], counts: [], weeks: [], months: [] };
+    const { start } = span;
+    const n = diffDays(start, span.end) + 1;
     const days = Array.from({ length: n }, (_, i) => addDays(start, i));
     const counts = new Array<number>(n).fill(0);
     for (const p of doc.people)
@@ -31,9 +33,10 @@ export function Timeline({ doc, mine }: { doc: Doc; mine: Set<number> }) {
       .filter(({ d, i }) => d.getUTCDate() === 1 || i === 0)
       .map(({ d, i }) => ({ i, label: fmt.format(d) }));
     return { days, counts, weeks, months };
-  }, [doc]);
+  }, [doc, span]);
 
-  const start = parseDate(doc.season_start);
+  if (!span) return null;
+  const { start } = span;
   const total = Math.max(doc.people.length, 1);
   const width = days.length * DAY_W;
   const dayFmt = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', timeZone: 'UTC' });

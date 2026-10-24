@@ -1,10 +1,11 @@
-use chrono::{Duration, NaiveDate};
+use chrono::{Months, NaiveDate};
 use unicode_normalization::UnicodeNormalization;
 
 pub const MAX_NAME_CHARS: usize = 15;
 pub const MAX_RANGES_PER_PERSON: usize = 10;
 pub const MAX_PEOPLE_PER_DOC: usize = 100;
-pub const MAX_SEASON_DAYS: i64 = 366;
+/// How far ahead a vacation may start.
+pub const MAX_MONTHS_AHEAD: u32 = 18;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ValidationError {
@@ -12,14 +13,12 @@ pub enum ValidationError {
     NameTooLong,
     NameChars,
     RangeOrder,
-    RangeOutsideSeason,
+    RangeInPast,
+    RangeTooFar,
     RangeOverlap,
     TooManyRanges,
     TooManyPeople,
     NameTaken,
-    SeasonOrder,
-    SeasonTooLong,
-    SeasonInPast,
 }
 
 impl ValidationError {
@@ -29,14 +28,12 @@ impl ValidationError {
             Self::NameTooLong => "name_too_long",
             Self::NameChars => "name_chars",
             Self::RangeOrder => "range_order",
-            Self::RangeOutsideSeason => "range_outside_season",
+            Self::RangeInPast => "range_in_past",
+            Self::RangeTooFar => "range_too_far",
             Self::RangeOverlap => "range_overlap",
             Self::TooManyRanges => "too_many_ranges",
             Self::TooManyPeople => "too_many_people",
             Self::NameTaken => "name_taken",
-            Self::SeasonOrder => "season_order",
-            Self::SeasonTooLong => "season_too_long",
-            Self::SeasonInPast => "season_in_past",
         }
     }
 }
@@ -69,34 +66,20 @@ pub fn validate_name(raw: &str) -> Result<String, ValidationError> {
     Ok(name)
 }
 
-pub fn validate_season(
-    start: NaiveDate,
-    end: NaiveDate,
-    today: NaiveDate,
-) -> Result<(), ValidationError> {
-    if start > end {
-        return Err(ValidationError::SeasonOrder);
-    }
-    if (end - start).num_days() >= MAX_SEASON_DAYS {
-        return Err(ValidationError::SeasonTooLong);
-    }
-    if end < today - Duration::days(30) {
-        return Err(ValidationError::SeasonInPast);
-    }
-    Ok(())
-}
-
 pub fn validate_range(
     start: NaiveDate,
     end: NaiveDate,
-    season: (NaiveDate, NaiveDate),
+    today: NaiveDate,
     existing: &[(NaiveDate, NaiveDate)],
 ) -> Result<(), ValidationError> {
     if start > end {
         return Err(ValidationError::RangeOrder);
     }
-    if start < season.0 || end > season.1 {
-        return Err(ValidationError::RangeOutsideSeason);
+    if end < today {
+        return Err(ValidationError::RangeInPast);
+    }
+    if today.checked_add_months(Months::new(MAX_MONTHS_AHEAD)).is_none_or(|last| start > last) {
+        return Err(ValidationError::RangeTooFar);
     }
     if existing.len() >= MAX_RANGES_PER_PERSON {
         return Err(ValidationError::TooManyRanges);
@@ -140,29 +123,26 @@ mod tests {
 
     #[test]
     fn ranges() {
-        let season = (d("2026-06-01"), d("2026-08-31"));
+        let today = d("2026-06-01");
         let ex = [(d("2026-06-10"), d("2026-06-20"))];
-        assert!(validate_range(d("2026-06-21"), d("2026-06-25"), season, &ex).is_ok());
+        assert!(validate_range(d("2026-06-21"), d("2026-06-25"), today, &ex).is_ok());
         assert_eq!(
-            validate_range(d("2026-06-20"), d("2026-06-25"), season, &ex),
+            validate_range(d("2026-06-20"), d("2026-06-25"), today, &ex),
             Err(ValidationError::RangeOverlap)
         );
         assert_eq!(
-            validate_range(d("2026-05-31"), d("2026-06-02"), season, &ex),
-            Err(ValidationError::RangeOutsideSeason)
+            validate_range(d("2026-05-20"), d("2026-05-31"), today, &ex),
+            Err(ValidationError::RangeInPast)
+        );
+        assert!(validate_range(d("2026-05-31"), d("2026-06-02"), today, &ex).is_ok());
+        assert!(validate_range(d("2027-12-01"), d("2027-12-05"), today, &ex).is_ok());
+        assert_eq!(
+            validate_range(d("2027-12-02"), d("2027-12-05"), today, &ex),
+            Err(ValidationError::RangeTooFar)
         );
         assert_eq!(
-            validate_range(d("2026-07-02"), d("2026-07-01"), season, &ex),
+            validate_range(d("2026-07-02"), d("2026-07-01"), today, &ex),
             Err(ValidationError::RangeOrder)
         );
-    }
-
-    #[test]
-    fn seasons() {
-        let today = d("2026-10-11");
-        assert!(validate_season(d("2027-06-01"), d("2027-08-31"), today).is_ok());
-        assert_eq!(validate_season(d("2027-06-02"), d("2027-06-01"), today), Err(ValidationError::SeasonOrder));
-        assert_eq!(validate_season(d("2027-01-01"), d("2029-01-01"), today), Err(ValidationError::SeasonTooLong));
-        assert_eq!(validate_season(d("2025-06-01"), d("2025-08-01"), today), Err(ValidationError::SeasonInPast));
     }
 }

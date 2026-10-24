@@ -66,12 +66,6 @@ impl From<StoreError> for ApiError {
 type ApiResult<T> = Result<Json<T>, ApiError>;
 
 #[derive(Deserialize)]
-struct NewDoc {
-    season_start: NaiveDate,
-    season_end: NaiveDate,
-}
-
-#[derive(Deserialize)]
 struct NewPerson {
     name: String,
 }
@@ -82,11 +76,11 @@ struct NewVacation {
     end: NaiveDate,
 }
 
-async fn create_doc(State(s): State<Shared>, Json(b): Json<NewDoc>) -> ApiResult<serde_json::Value> {
+async fn create_doc(State(s): State<Shared>) -> ApiResult<serde_json::Value> {
     if !s.allow_creation() {
         return Err(ApiError(StatusCode::TOO_MANY_REQUESTS, "rate_limited"));
     }
-    let id = s.store.create_document(b.season_start, b.season_end, (s.today)())?;
+    let id = s.store.create_document((s.today)())?;
     Ok(Json(json!({ "id": id })))
 }
 
@@ -115,7 +109,7 @@ async fn add_vacation(
     Path((id, pid)): Path<(String, i64)>,
     Json(b): Json<NewVacation>,
 ) -> ApiResult<crate::store::Vacation> {
-    Ok(Json(s.store.add_vacation(&id, pid, b.start, b.end)?))
+    Ok(Json(s.store.add_vacation(&id, pid, b.start, b.end, (s.today)())?))
 }
 
 async fn delete_vacation(

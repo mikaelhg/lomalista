@@ -8,7 +8,10 @@ use serde::Serialize;
 
 use crate::validation::{self, ValidationError};
 
-pub const ARCHIVE_GRACE_DAYS: i64 = 14;
+/// A list stays writable at least this long after it was created...
+pub const MIN_LIFETIME_MONTHS: u32 = 12;
+/// ...and at least this long after the last day of its latest vacation.
+pub const GRACE_MONTHS: u32 = 1;
 
 #[derive(Debug)]
 pub enum StoreError {
@@ -46,8 +49,6 @@ pub struct Person {
 
 #[derive(Serialize, Debug)]
 pub struct Document {
-    pub season_start: NaiveDate,
-    pub season_end: NaiveDate,
     pub archived: bool,
     pub people: Vec<Person>,
 }
@@ -59,8 +60,7 @@ pub struct Store {
 const SCHEMA: &str = "
 CREATE TABLE IF NOT EXISTS documents (
     id TEXT PRIMARY KEY,
-    season_start TEXT NOT NULL,
-    season_end TEXT NOT NULL,
+    created_on TEXT NOT NULL,
     archived_at TEXT
 );
 CREATE TABLE IF NOT EXISTS people (
@@ -101,36 +101,46 @@ impl Store {
         let _ = conn.pragma_update(None, "journal_mode", "WAL");
         conn.busy_timeout(std::time::Duration::from_secs(5))?;
         conn.execute_batch(SCHEMA)?;
+        Self::migrate(&conn)?;
         Ok(Store { conn: Mutex::new(conn) })
+    }
+
+    /// Upgrades databases from when lists had a season: the season start stands in for the
+    /// unknown creation date.
+    fn migrate(conn: &Connection) -> Result<(), rusqlite::Error> {
+        let has_season: bool = conn.query_row(
+            "SELECT COUNT(*) > 0 FROM pragma_table_info('documents') WHERE name = 'season_start'",
+            [],
+            |r| r.get(0),
+        )?;
+        if has_season {
+            conn.execute_batch(
+                "BEGIN;
+                 ALTER TABLE documents ADD COLUMN created_on TEXT;
+                 UPDATE documents SET created_on = season_start;
+                 ALTER TABLE documents DROP COLUMN season_start;
+                 ALTER TABLE documents DROP COLUMN season_end;
+                 COMMIT;",
+            )?;
+        }
+        Ok(())
     }
 
     fn conn(&self) -> std::sync::MutexGuard<'_, Connection> {
         self.conn.lock().unwrap_or_else(|p| p.into_inner())
     }
 
-    pub fn create_document(
-        &self,
-        start: NaiveDate,
-        end: NaiveDate,
-        today: NaiveDate,
-    ) -> Result<String, StoreError> {
-        validation::validate_season(start, end, today)?;
+    pub fn create_document(&self, today: NaiveDate) -> Result<String, StoreError> {
         let id = new_document_id();
-        self.conn().execute(
-            "INSERT INTO documents (id, season_start, season_end) VALUES (?1, ?2, ?3)",
-            params![id, start, end],
-        )?;
+        self.conn()
+            .execute("INSERT INTO documents (id, created_on) VALUES (?1, ?2)", params![id, today])?;
         Ok(id)
     }
 
     pub fn get_document(&self, id: &str) -> Result<Document, StoreError> {
         let conn = self.conn();
-        let (season_start, season_end, archived): (NaiveDate, NaiveDate, bool) = conn
-            .query_row(
-                "SELECT season_start, season_end, archived_at IS NOT NULL FROM documents WHERE id = ?1",
-                [id],
-                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
-            )
+        let archived: bool = conn
+            .query_row("SELECT archived_at IS NOT NULL FROM documents WHERE id = ?1", [id], |r| r.get(0))
             .optional()?
             .ok_or(StoreError::NotFound)?;
 
@@ -154,29 +164,22 @@ impl Store {
                 p.vacations.push(vac);
             }
         }
-        Ok(Document { season_start, season_end, archived, people })
+        Ok(Document { archived, people })
     }
 
-    /// Returns the season window of a writable document.
-    fn writable_season(conn: &Connection, id: &str) -> Result<(NaiveDate, NaiveDate), StoreError> {
-        let (s, e, archived): (NaiveDate, NaiveDate, bool) = conn
-            .query_row(
-                "SELECT season_start, season_end, archived_at IS NOT NULL FROM documents WHERE id = ?1",
-                [id],
-                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
-            )
+    /// Fails unless the document exists and is not archived.
+    fn check_writable(conn: &Connection, id: &str) -> Result<(), StoreError> {
+        let archived: bool = conn
+            .query_row("SELECT archived_at IS NOT NULL FROM documents WHERE id = ?1", [id], |r| r.get(0))
             .optional()?
             .ok_or(StoreError::NotFound)?;
-        if archived {
-            return Err(StoreError::Archived);
-        }
-        Ok((s, e))
+        if archived { Err(StoreError::Archived) } else { Ok(()) }
     }
 
     pub fn add_person(&self, doc: &str, raw_name: &str) -> Result<Person, StoreError> {
         let name = validation::validate_name(raw_name)?;
         let conn = self.conn();
-        Self::writable_season(&conn, doc)?;
+        Self::check_writable(&conn, doc)?;
         let count: i64 =
             conn.query_row("SELECT COUNT(*) FROM people WHERE document_id = ?1", [doc], |r| r.get(0))?;
         if count as usize >= validation::MAX_PEOPLE_PER_DOC {
@@ -195,7 +198,7 @@ impl Store {
 
     pub fn delete_person(&self, doc: &str, person: i64) -> Result<(), StoreError> {
         let conn = self.conn();
-        Self::writable_season(&conn, doc)?;
+        Self::check_writable(&conn, doc)?;
         let n = conn.execute("DELETE FROM people WHERE id = ?1 AND document_id = ?2", params![person, doc])?;
         if n == 0 { Err(StoreError::NotFound) } else { Ok(()) }
     }
@@ -206,9 +209,10 @@ impl Store {
         person: i64,
         start: NaiveDate,
         end: NaiveDate,
+        today: NaiveDate,
     ) -> Result<Vacation, StoreError> {
         let conn = self.conn();
-        let season = Self::writable_season(&conn, doc)?;
+        Self::check_writable(&conn, doc)?;
         conn.query_row(
             "SELECT 1 FROM people WHERE id = ?1 AND document_id = ?2",
             params![person, doc],
@@ -220,7 +224,7 @@ impl Store {
             .prepare("SELECT start, end FROM vacations WHERE person_id = ?1")?
             .query_map([person], |r| Ok((r.get(0)?, r.get(1)?)))?
             .collect::<Result<_, _>>()?;
-        validation::validate_range(start, end, season, &existing)?;
+        validation::validate_range(start, end, today, &existing)?;
         conn.execute(
             "INSERT INTO vacations (person_id, start, end) VALUES (?1, ?2, ?3)",
             params![person, start, end],
@@ -230,7 +234,7 @@ impl Store {
 
     pub fn delete_vacation(&self, doc: &str, person: i64, vacation: i64) -> Result<(), StoreError> {
         let conn = self.conn();
-        Self::writable_season(&conn, doc)?;
+        Self::check_writable(&conn, doc)?;
         let n = conn.execute(
             "DELETE FROM vacations WHERE id = ?1 AND person_id = ?2
              AND person_id IN (SELECT id FROM people WHERE document_id = ?3)",
@@ -239,15 +243,23 @@ impl Store {
         if n == 0 { Err(StoreError::NotFound) } else { Ok(()) }
     }
 
-    /// Marks documents whose season ended more than the grace period ago as archived,
-    /// and deletes documents that have been archived longer than `retention_days`.
+    /// Archives documents created at least `MIN_LIFETIME_MONTHS` ago whose latest vacation ended
+    /// at least `GRACE_MONTHS` ago, and deletes documents archived longer than `retention_days`.
     /// Returns (archived, deleted).
     pub fn run_archiver(&self, today: NaiveDate, retention_days: i64) -> Result<(usize, usize), StoreError> {
         let conn = self.conn();
-        let cutoff = today - Duration::days(ARCHIVE_GRACE_DAYS);
         let archived = conn.execute(
-            "UPDATE documents SET archived_at = ?1 WHERE archived_at IS NULL AND season_end < ?2",
-            params![today, cutoff],
+            "UPDATE documents SET archived_at = ?1 WHERE archived_at IS NULL
+             AND date(created_on, ?2) <= ?1
+             AND date(COALESCE(
+                 (SELECT MAX(v.end) FROM vacations v JOIN people p ON p.id = v.person_id
+                  WHERE p.document_id = documents.id),
+                 created_on), ?3) <= ?1",
+            params![
+                today,
+                format!("+{MIN_LIFETIME_MONTHS} months"),
+                format!("+{GRACE_MONTHS} months")
+            ],
         )?;
         let purge_before = today - Duration::days(retention_days);
         let deleted = conn.execute(
@@ -266,8 +278,10 @@ mod tests {
         s.parse().unwrap()
     }
 
+    const TODAY: &str = "2027-03-01";
+
     fn doc(store: &Store) -> String {
-        store.create_document(d("2027-06-01"), d("2027-08-31"), d("2027-03-01")).unwrap()
+        store.create_document(d(TODAY)).unwrap()
     }
 
     #[test]
@@ -287,9 +301,9 @@ mod tests {
             s.add_person(&id, "Åsa"),
             Err(StoreError::Invalid(ValidationError::NameTaken))
         ));
-        s.add_vacation(&id, p.id, d("2027-07-01"), d("2027-07-14")).unwrap();
+        s.add_vacation(&id, p.id, d("2027-07-01"), d("2027-07-14"), d(TODAY)).unwrap();
         assert!(matches!(
-            s.add_vacation(&id, p.id, d("2027-07-10"), d("2027-07-20")),
+            s.add_vacation(&id, p.id, d("2027-07-10"), d("2027-07-20"), d(TODAY)),
             Err(StoreError::Invalid(ValidationError::RangeOverlap))
         ));
         let got = s.get_document(&id).unwrap();
@@ -308,21 +322,50 @@ mod tests {
         let p = s.add_person(&a, "Anna").unwrap();
         assert!(matches!(s.delete_person(&b, p.id), Err(StoreError::NotFound)));
         assert!(matches!(
-            s.add_vacation(&b, p.id, d("2027-07-01"), d("2027-07-02")),
+            s.add_vacation(&b, p.id, d("2027-07-01"), d("2027-07-02"), d(TODAY)),
             Err(StoreError::NotFound)
         ));
     }
 
     #[test]
-    fn archive_and_purge() {
+    fn archives_a_year_after_creation_when_vacations_end_earlier() {
         let s = Store::open_in_memory().unwrap();
         let id = doc(&s);
-        assert_eq!(s.run_archiver(d("2027-09-10"), 365).unwrap(), (0, 0));
-        assert_eq!(s.run_archiver(d("2027-09-15"), 365).unwrap(), (1, 0));
+        let p = s.add_person(&id, "Anna").unwrap();
+        s.add_vacation(&id, p.id, d("2027-07-01"), d("2027-07-14"), d(TODAY)).unwrap();
+        assert_eq!(s.run_archiver(d("2028-02-29"), 365).unwrap(), (0, 0));
+        assert_eq!(s.run_archiver(d("2028-03-01"), 365).unwrap(), (1, 0));
         assert!(s.get_document(&id).unwrap().archived);
-        assert!(matches!(s.add_person(&id, "Anna"), Err(StoreError::Archived)));
-        assert_eq!(s.run_archiver(d("2028-09-14"), 365).unwrap(), (0, 0));
-        assert_eq!(s.run_archiver(d("2028-09-16"), 365).unwrap(), (0, 1));
+        assert!(matches!(s.add_person(&id, "Bo"), Err(StoreError::Archived)));
+        assert_eq!(s.run_archiver(d("2029-02-28"), 365).unwrap(), (0, 0));
+        assert_eq!(s.run_archiver(d("2029-03-02"), 365).unwrap(), (0, 1));
         assert!(matches!(s.get_document(&id), Err(StoreError::NotFound)));
+    }
+
+    #[test]
+    fn archives_a_month_after_the_last_vacation_when_that_is_later() {
+        let s = Store::open_in_memory().unwrap();
+        let id = doc(&s);
+        let p = s.add_person(&id, "Anna").unwrap();
+        s.add_vacation(&id, p.id, d("2028-04-01"), d("2028-04-20"), d(TODAY)).unwrap();
+        assert_eq!(s.run_archiver(d("2028-03-01"), 365).unwrap(), (0, 0));
+        assert_eq!(s.run_archiver(d("2028-05-19"), 365).unwrap(), (0, 0));
+        assert_eq!(s.run_archiver(d("2028-05-20"), 365).unwrap(), (1, 0));
+    }
+
+    #[test]
+    fn migrates_season_documents() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE documents (id TEXT PRIMARY KEY, season_start TEXT NOT NULL,
+                 season_end TEXT NOT NULL, archived_at TEXT);
+             INSERT INTO documents VALUES ('old', '2027-06-01', '2027-08-31', NULL);",
+        )
+        .unwrap();
+        let s = Store::init(conn).unwrap();
+        assert!(!s.get_document("old").unwrap().archived);
+        s.create_document(d(TODAY)).unwrap();
+        assert_eq!(s.run_archiver(d("2028-05-31"), 365).unwrap(), (1, 0)); // the new one
+        assert_eq!(s.run_archiver(d("2028-06-01"), 365).unwrap(), (1, 0));
     }
 }

@@ -2,7 +2,7 @@
 
 Shared vacation lists for teams. A list is a document with an unguessable URL; anyone with the URL can
 add names and date ranges. No accounts. Stored data: names (Nordic letters, ≤15 chars) and dates only.
-Lists become read-only 14 days after the season ends and are deleted after `LOMALISTA_RETENTION_DAYS` (365).
+Lists become read-only 12 months after creation or one month after their last vacation, whichever is later, and are deleted after `LOMALISTA_RETENTION_DAYS` (365).
 
 ## Develop
 ```

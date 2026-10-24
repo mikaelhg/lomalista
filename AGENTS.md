@@ -1,12 +1,12 @@
 # lomalista – agent guide
 
-Vacation scheduling web app for teams in Nordic companies. A team's vacation list for a season is a *document*
+Vacation scheduling web app for teams in Nordic companies. A team's vacation list is a *document*
 with a unique random URL. The creator shares the URL; everyone enters their own vacation dates. There is no
 authentication or authorization: the unguessable URL is the only access control.
 
 ## Hard constraints
 - The only data allowed: self-entered names (Nordic letters only, ≤15 characters) and date ranges
-  (plus the season window dates). Do not add other personal data, titles, free text, IPs, or analytics.
+  (plus each list's creation date, which drives archiving). Do not add other personal data, titles, free text, IPs, or analytics.
 - Never log document IDs or request paths. Keep `Referrer-Policy: no-referrer` and the CSP.
 - Name rules live in two places and must stay in sync:
   `backend/src/validation.rs` (authoritative) and `frontend/src/lib/validation.ts` (UX mirror).

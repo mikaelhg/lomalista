@@ -6,6 +6,7 @@ import { PersonCard } from '../components/PersonCard';
 import { Timeline } from '../components/Timeline';
 import { Button, card } from '../components/ui';
 import { ApiError, api, errCode } from '../lib/api';
+import { addMonths, todayLocal } from '../lib/dates';
 import { lang, t, tError } from '../lib/i18n';
 import { loadMine, saveMine } from '../lib/mine';
 import { navigate } from '../lib/navigate';
@@ -35,15 +36,16 @@ export function DocPage({ id }: { id: string }) {
   const fmt = new Intl.DateTimeFormat(lang, { dateStyle: 'medium', timeZone: 'UTC' });
   const d = (s: string) => fmt.format(new Date(`${s}T00:00:00Z`));
   const readOnly = doc.archived;
+  // Mirrors the backend's limits: no past vacations, none starting over 18 months ahead.
+  const today = todayLocal();
+  const lastStart = addMonths(today, 18);
 
   const confirmOthers = (pid: number, action: () => void) =>
     mine.has(pid) ? action() : setPending(() => action);
 
   return (
     <>
-      <h1 className="mb-4 mt-2 text-2xl font-bold">
-        {d(doc.season_start)} – {d(doc.season_end)}
-      </h1>
+      <h1 className="mb-4 mt-2 text-2xl font-bold">{t('listTitle')}</h1>
       {readOnly && <p className="rounded-md bg-warn/20 p-3">{t('archivedBanner')}</p>}
       <Timeline doc={doc} mine={mine} />
 
@@ -56,8 +58,8 @@ export function DocPage({ id }: { id: string }) {
             person={p}
             mine={mine.has(p.id)}
             readOnly={readOnly}
-            min={doc.season_start}
-            max={doc.season_end}
+            min={today}
+            max={lastStart}
             format={d}
             onChange={refresh}
             confirmEdit={(action) => confirmOthers(p.id, action)}

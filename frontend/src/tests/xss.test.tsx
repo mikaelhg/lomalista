@@ -54,8 +54,6 @@ describe('rendering escapes hostile data', () => {
   // Defence in depth: even if a hostile name reached the client (e.g. a tampered database),
   // React must render it as text and attribute values, never as markup.
   const doc: Doc = {
-    season_start: '2027-06-01',
-    season_end: '2027-06-30',
     archived: false,
     people: PAYLOADS.map((name, i) => ({
       id: i + 1,

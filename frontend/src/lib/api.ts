@@ -9,8 +9,6 @@ export interface Person {
   vacations: Vacation[];
 }
 export interface Doc {
-  season_start: string;
-  season_end: string;
   archived: boolean;
   people: Person[];
 }
@@ -38,8 +36,7 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
 }
 
 export const api = {
-  createDoc: (season_start: string, season_end: string) =>
-    req<{ id: string }>('POST', '/docs', { season_start, season_end }),
+  createDoc: () => req<{ id: string }>('POST', '/docs'),
   getDoc: (id: string) => req<Doc>('GET', `/docs/${id}`),
   addPerson: (id: string, name: string) => req<Person>('POST', `/docs/${id}/people`, { name }),
   deletePerson: (id: string, pid: number) => req<void>('DELETE', `/docs/${id}/people/${pid}`),

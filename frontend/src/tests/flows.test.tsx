@@ -12,7 +12,7 @@ import { Landing } from '../pages/Landing';
 let seed: Doc['people'] = [];
 
 function fakeApi() {
-  const doc: Doc = { season_start: '2027-06-01', season_end: '2027-08-31', archived: false, people: seed };
+  const doc: Doc = { archived: false, people: seed };
   let next = 1;
   const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -42,9 +42,16 @@ function renderWithQuery(ui: ReactNode) {
   return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
 }
 
-/** Opens the range calendar and picks a single day (start and end). */
-async function pickDay(label: string) {
+/** Opens the range calendar and picks the 15th of next month as a single-day range. */
+async function pickDay() {
+  const n = new Date();
+  const target = new Date(n.getFullYear(), n.getMonth() + 1, 15);
+  const label = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).format(
+    target,
+  );
   await userEvent.click(screen.getByRole('button', { name: /calendar/i }));
+  // React Aria also renders a hidden Next button for screen readers; the first is the visible one
+  await userEvent.click(screen.getAllByRole('button', { name: 'Next' })[0]);
   const day = () => screen.getByRole('button', { name: new RegExp(label) });
   await userEvent.click(day());
   await userEvent.click(day());
@@ -78,7 +85,7 @@ describe('DocPage', () => {
     await userEvent.click(screen.getByRole('button', { name: t('add') }));
     expect(await screen.findByRole('heading', { name: /Åsa/ })).toBeInTheDocument();
 
-    await pickDay('20 June 2027');
+    await pickDay();
     await userEvent.click(screen.getByRole('button', { name: t('addRange') }));
     expect(await screen.findByRole('button', { name: t('remove') })).toBeInTheDocument();
   });
@@ -88,7 +95,7 @@ describe('DocPage', () => {
     renderWithQuery(<DocPage id="abc" />);
     await screen.findByRole('heading', { name: /Erik/ });
 
-    await pickDay('20 June 2027');
+    await pickDay();
     await userEvent.click(screen.getByRole('button', { name: t('addRange') }));
     const dialog = await screen.findByRole('alertdialog');
     expect(dialog).toHaveTextContent(t('confirmOthers'));

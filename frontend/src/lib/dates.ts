@@ -35,9 +35,19 @@ export function todayLocal(): string {
   return formatDate(new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())));
 }
 
-/** Season suggested on the create form: the coming (or current) summer. */
-export function defaultSeason(today: string): { start: string; end: string } {
-  const y = Number(today.slice(0, 4));
-  const year = today > `${y}-08-31` ? y + 1 : y;
-  return { start: `${year}-06-01`, end: `${year}-08-31` };
+/** Adds calendar months, clamping to the month's last day like the backend does. */
+export function addMonths(s: string, n: number): string {
+  const d = parseDate(s);
+  const first = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, 1));
+  const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+  first.setUTCDate(Math.min(d.getUTCDate(), last));
+  return formatDate(first);
+}
+
+/** Whole weeks (Monday to Sunday) covering every vacation, or null if there are none. */
+export function vacationSpan(ranges: { start: string; end: string }[]): { start: Date; end: Date } | null {
+  if (ranges.length === 0) return null;
+  const first = parseDate(ranges.reduce((m, r) => (r.start < m ? r.start : m), ranges[0].start));
+  const last = parseDate(ranges.reduce((m, r) => (r.end > m ? r.end : m), ranges[0].end));
+  return { start: addDays(first, -weekday(first)), end: addDays(last, 6 - weekday(last)) };
 }

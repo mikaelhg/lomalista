@@ -31,7 +31,7 @@ async fn call(app: &axum::Router, method: &str, uri: &str, body: Option<Value>) 
 }
 
 async fn new_doc(app: &axum::Router) -> String {
-    let (s, v) = call(app, "POST", "/api/docs", Some(json!({"season_start":"2027-06-01","season_end":"2027-08-31"}))).await;
+    let (s, v) = call(app, "POST", "/api/docs", None).await;
     assert_eq!(s, StatusCode::OK);
     v["id"].as_str().unwrap().to_string()
 }
@@ -68,8 +68,17 @@ async fn rejects_bad_input() {
         assert_eq!(s, StatusCode::UNPROCESSABLE_ENTITY, "{name}");
         assert!(v["error"].is_string());
     }
-    let (s, _) = call(&app, "POST", "/api/docs", Some(json!({"season_start":"2027-06-01","season_end":"2027-05-01"}))).await;
-    assert_eq!(s, StatusCode::UNPROCESSABLE_ENTITY);
+    let (_, p) = call(&app, "POST", &format!("/api/docs/{id}/people"), Some(json!({"name":"Anna"}))).await;
+    let pid = p["id"].as_i64().unwrap();
+    for (start, end, code) in [
+        ("2027-02-01", "2027-02-28", "range_in_past"),
+        ("2028-09-02", "2028-09-05", "range_too_far"),
+        ("2027-07-02", "2027-07-01", "range_order"),
+    ] {
+        let (s, v) = call(&app, "POST", &format!("/api/docs/{id}/people/{pid}/vacations"),
+            Some(json!({"start":start,"end":end}))).await;
+        assert_eq!((s, v["error"].as_str()), (StatusCode::UNPROCESSABLE_ENTITY, Some(code)), "{start}");
+    }
     let (s, _) = call(&app, "GET", "/api/docs/nonsense", None).await;
     assert_eq!(s, StatusCode::NOT_FOUND);
 }
@@ -78,7 +87,7 @@ async fn rejects_bad_input() {
 async fn archived_is_read_only() {
     let (app, st) = app();
     let id = new_doc(&app).await;
-    st.store.run_archiver("2028-01-01".parse().unwrap(), 365).unwrap();
+    st.store.run_archiver("2028-03-01".parse().unwrap(), 365).unwrap();
     let (s, v) = call(&app, "POST", &format!("/api/docs/{id}/people"), Some(json!({"name":"Anna"}))).await;
     assert_eq!(s, StatusCode::CONFLICT);
     assert_eq!(v["error"], "archived");
