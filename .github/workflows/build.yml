@@ -13,10 +13,9 @@ concurrency:
 
 jobs:
   backend:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
     env:
-      RUST_VERSION: "1.98.1"
       CARGO_TERM_COLOR: always
     defaults:
       run:
@@ -25,10 +24,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # Installs the toolchain pinned in backend/rust-toolchain.toml
       - name: Install Rust
-        run: |
-          rustup toolchain install "$RUST_VERSION" --profile minimal
-          rustup default "$RUST_VERSION"
+        run: rustup toolchain install
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: backend
@@ -41,7 +39,7 @@ jobs:
           retention-days: 14
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     defaults:
       run:

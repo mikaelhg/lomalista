@@ -26,16 +26,18 @@ authentication or authorization: the unguessable URL is the only access control.
 
 ## Commands
 - Backend: `cd backend && cargo test && cargo clippy --all-targets -- -D warnings`; run with `cargo run`
-  (env: `LOMALISTA_DB`, `LOMALISTA_BIND`, `LOMALISTA_STATIC_DIR`, `LOMALISTA_RETENTION_DAYS`).
+  (env: `LOMALISTA_DB`, `LOMALISTA_BIND`, `LOMALISTA_STATIC_DIR`, `LOMALISTA_RETENTION_DAYS`). The Rust
+  version is pinned in `backend/rust-toolchain.toml`, which rustup uses locally and in CI.
 - Frontend: `cd frontend && pnpm test && pnpm typecheck && pnpm check && pnpm build`; `pnpm check:fix` formats and fixes with Biome (`biome.json`); CI uses `pnpm ci:lint` and `pnpm ci:typecheck`; local Node and pnpm versions are pinned in `mise.toml` (run `mise install`), CI pins pnpm via `packageManager` in `package.json` (keep the two in sync); `devEngines` in `package.json` makes pnpm refuse to run on another major version of Node or pnpm (update its ranges only on a major upgrade); dev server `pnpm dev`
   (proxies `/api` to 127.0.0.1:3000).
 - CI: Forgejo Actions in `.forgejo/workflows/ci.yml`. The backend job runs in `node:<version>-bookworm`
-  (keep the tag in sync with `mise.toml`) and pins Rust in `RUST_VERSION` (local toolchains are not
-  pinned). The frontend job runs in `node:24-alpine`, where `pnpm/setup` installs pnpm from
-  `packageManager`, Node from `devEngines.runtime`, and the dependencies.
+  (keep the tag in sync with `mise.toml`), installs rustup by checksum (`RUSTUP_INIT_VERSION`,
+  `RUSTUP_INIT_SHA256`) and then the toolchain from `rust-toolchain.toml`. The frontend job runs in
+  `node:24-alpine`, where `pnpm/setup` installs pnpm from `packageManager`, Node from
+  `devEngines.runtime`, and the dependencies.
 - GitHub Actions: `.github/workflows/test.yml` runs the checks on pull requests; `build.yml` builds the
-  release binary and `frontend/dist` on pushes to `main` and uploads them as artifacts. Same Rust pin
-  and `pnpm/setup` use as the Forgejo workflow; keep the two in step.
+  release binary and `frontend/dist` on pushes to `main` and uploads them as artifacts. Both use the
+  runner's rustup with `rust-toolchain.toml`, and `pnpm/setup` like the Forgejo workflow; keep them in step.
 - Lint workflows with jactionlint (pinned in `mise.toml`, with shellcheck for `run:` scripts): `jactionlint`
   for `.github` (config `.github/jactionlint.yaml`) and
   `jactionlint -c .forgejo/jactionlint.yaml .forgejo/workflows/*.yml` for Forgejo.
