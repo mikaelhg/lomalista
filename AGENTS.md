@@ -37,6 +37,8 @@ authentication or authorization: the unguessable URL is the only access control.
 - Structure: use ast-grep (`ast-grep run -p '<pattern>' -l <lang>`) for code shapes such as call
   sites, JSX usage, or functions with a given signature, where text search would match comments,
   strings, or similar names.
+- Dependencies: to search a library's types or source under `node_modules`, pass its path and add
+  `-u`; packages ship their own ignore files, so without it ripgrep silently finds nothing.
 
 ## Running processes (servers, watchers, anything long-lived)
 If you start a process, record its PID in a temp file and use that file to stop it. Never use `pkill -f`,
