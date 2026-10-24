@@ -37,6 +37,8 @@ const PAYLOADS: &[&str] = &[
     "Z\u{0351}\u{0352}\u{0353}", // combining-mark stacking
     "Anna\u{E000}",     // private use
     "😀",
+    "Åsa\u{0336}\u{0336}", // short zalgo: valid letters plus marks, within the length limit
+    "Ţ̸̟̳͍͙̱̜̹͉̱͋̃̃̊̚h̵̛͖̳̱͎̬̺̰̭̘̩̤̽̿̽̂̍̉͌̆̆̃ͅi̶̧̧̛̛̯̻̹̪̳̩̣̝̠̱̤͆̀̓͒͒͝s̴̛̜̹̪̉̑͊̎̒̉̎͝ ̴͖̫̏̄͒̍̀̐̀̓͋ì̸̢͚͎͓̻̘̙̩̽s̸̮͓̼̼̥̝͋͒̓̒̌̓̃̂̏͜ͅ ̵̨̼̼̲̞̓̑͑͌͛̓̉̆̈́̔̌̌̕̚á̶̗̓̔̔̈́̀͋͊̈́̀́̉̃̕̚ ̵̠̠̺̇͋̒͒͑̀̎̊͗̓̊̓̒̀̕t̴͖̰̦̱͙͓̑͂̈́͂͒̑͌̿̀̊̂͜͠͝é̵̢̖̹̝͚̥̮͚͕̰̦̩̒͜͝ͅş̵̧̥͓̠̠͚̪̩̰̝̜͔̫͐̇̆̌̾̑͗t̷̞̭͍̘̻͍̫̄̈́̔͐͐͐̀̋͋͊̕", // long zalgo
 ];
 
 fn app() -> (axum::Router, Arc<AppState>) {
