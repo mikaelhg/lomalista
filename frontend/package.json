@@ -41,5 +41,9 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2"
   },
-  "packageManager": "pnpm@12.10.1"
+  "packageManager": "pnpm@12.15.0",
+  "devEngines": {
+    "runtime": { "name": "node", "version": "^24.21.0", "onFail": "error" },
+    "packageManager": { "name": "pnpm", "version": "^12.15.0", "onFail": "error" }
+  }
 }
