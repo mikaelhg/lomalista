@@ -30,6 +30,14 @@ authentication or authorization: the unguessable URL is the only access control.
 - Frontend: `cd frontend && pnpm test && pnpm typecheck && pnpm check && pnpm build`; `pnpm check:fix` formats and fixes with Biome (`biome.json`); CI uses `pnpm ci:lint` and `pnpm ci:typecheck`; local Node and pnpm versions are pinned in `mise.toml` (run `mise install`), CI pins pnpm via `packageManager` in `package.json` (keep the two in sync); dev server `pnpm dev`
   (proxies `/api` to 127.0.0.1:3000).
 
+## Code search
+- Text: use ripgrep (`rg`) for literal strings, translation keys, error codes, comments, and config.
+  Add `-F` when the search string contains regex characters, and `-g`/`-t` to limit it to certain
+  files (`rg -F "err_range" -t ts`). Do not use `grep -r` or `find | xargs grep`.
+- Structure: use ast-grep (`ast-grep run -p '<pattern>' -l <lang>`) for code shapes such as call
+  sites, JSX usage, or functions with a given signature, where text search would match comments,
+  strings, or similar names.
+
 ## Running processes (servers, watchers, anything long-lived)
 If you start a process, record its PID in a temp file and use that file to stop it. Never use `pkill -f`,
 `killall`, or name/pattern matching: it can kill your own shell or unrelated processes.
