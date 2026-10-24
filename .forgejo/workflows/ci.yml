@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: docker
+    # actions/checkout needs Node in the container; Rust is installed on top
+    container:
+      image: node:24.21.0-bookworm
+    env:
+      # Pinned so a new Rust release cannot break the build with new clippy lints
+      RUST_VERSION: "1.98.1"
+      CARGO_TERM_COLOR: always
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --profile minimal --default-toolchain "$RUST_VERSION" --component clippy
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - run: cargo test --locked
+      - run: cargo clippy --all-targets --locked -- -D warnings
+
+  frontend:
+    runs-on: docker
+    # Only runs the actions: pnpm/setup installs the Node version from devEngines.runtime
+    container:
+      image: node:24-alpine
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      # Without git, actions/checkout falls back to GitHub's REST API, which Forgejo does not serve
+      - name: Install git
+        run: apk add --no-cache git
+        working-directory: /
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
+        with:
+          working-directory: frontend
+          require-lockfile: true
+          cache: true
+      - run: pnpm ci:lint
+      - run: pnpm ci:typecheck
+      - run: pnpm test
+      - run: pnpm build

@@ -29,6 +29,10 @@ authentication or authorization: the unguessable URL is the only access control.
   (env: `LOMALISTA_DB`, `LOMALISTA_BIND`, `LOMALISTA_STATIC_DIR`, `LOMALISTA_RETENTION_DAYS`).
 - Frontend: `cd frontend && pnpm test && pnpm typecheck && pnpm check && pnpm build`; `pnpm check:fix` formats and fixes with Biome (`biome.json`); CI uses `pnpm ci:lint` and `pnpm ci:typecheck`; local Node and pnpm versions are pinned in `mise.toml` (run `mise install`), CI pins pnpm via `packageManager` in `package.json` (keep the two in sync); `devEngines` in `package.json` makes pnpm refuse to run on another major version of Node or pnpm (update its ranges only on a major upgrade); dev server `pnpm dev`
   (proxies `/api` to 127.0.0.1:3000).
+- CI: Forgejo Actions in `.forgejo/workflows/ci.yml`. The backend job runs in `node:<version>-bookworm`
+  (keep the tag in sync with `mise.toml`) and pins Rust in `RUST_VERSION` (local toolchains are not
+  pinned). The frontend job runs in `node:24-alpine`, where `pnpm/setup` installs pnpm from
+  `packageManager`, Node from `devEngines.runtime`, and the dependencies.
 
 ## Code search
 - Text: use ripgrep (`rg`) for literal strings, translation keys, error codes, comments, and config.
