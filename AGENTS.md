@@ -39,6 +39,9 @@ authentication or authorization: the unguessable URL is the only access control.
 - Lint workflows with jactionlint (pinned in `mise.toml`, with shellcheck for `run:` scripts): `jactionlint`
   for `.github` (config `.github/jactionlint.yaml`) and
   `jactionlint -c .forgejo/jactionlint.yaml .forgejo/workflows/*.yml` for Forgejo.
+- Pin workflow actions to commit SHAs with pinprick (pinned in `mise.toml`): `pinprick pin` pins new
+  `uses:` references and `pinprick update` checks pinned actions for updates; both are dry runs until
+  you add `--write`. It covers both `.github` and `.forgejo`; run jactionlint afterwards.
 
 ## Code search
 - Text: use ripgrep (`rg`) for literal strings, translation keys, error codes, comments, and config.
