@@ -7,7 +7,7 @@ expect.extend(matchers);
 afterEach(cleanup);
 
 const MAX_ROLE_LINES = 40;
-/** Runs at least this long of same-role elements with numbers in their names (calendar days) are collapsed. */
+/** Runs at least this long of same-role elements with same-shaped numbered names (calendar days) are collapsed. */
 const MIN_COLLAPSED_RUN = 5;
 const ROLES_HEADING = 'Named or interactive roles on the page:';
 /** Roles worth listing even without a name: an unlabelled control is a common cause of failed queries. */
@@ -41,12 +41,19 @@ function describeElement(el: Element): string {
   return `  <${[el.tagName.toLowerCase(), ...attrs].join(' ')}> "${computeAccessibleName(el)}"`;
 }
 
-/** One line per element, with long runs of numbered names (like calendar days) collapsed into one. */
+/** A name's pattern with words and numbers blanked out: "Monday, 31 May 2027" → "a, # a #". */
+const shape = (name: string) => name.replace(/\p{L}+/gu, 'a').replace(/\d+/g, '#');
+
+/**
+ * One line per element, with long runs of numbered names of the same shape (like calendar days)
+ * collapsed into one. Runs of different shapes, such as week labels then vacation bars, stay apart.
+ */
 function roleLines(role: string, names: string[]): string[] {
   const lines: string[] = [];
   for (let i = 0; i < names.length; ) {
+    const s = shape(names[i]);
     let j = i;
-    while (j < names.length && /\d/.test(names[j])) j++;
+    while (j < names.length && s.includes('#') && shape(names[j]) === s) j++;
     if (j - i >= MIN_COLLAPSED_RUN) {
       lines.push(`  ${role} "${names[i]}" … "${names[j - 1]}" (${j - i})`);
       i = j;
