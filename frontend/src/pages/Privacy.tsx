@@ -1,13 +1,12 @@
+import { parseDate } from '@internationalized/date';
 import { card } from '../components/ui';
-import { parseDate } from '../lib/dates';
+import { dateFormat } from '../lib/dates';
 import { lang } from '../lib/i18n';
 import { controller, policies, updated } from '../lib/privacy';
 
 export function Privacy() {
   const p = policies[lang] ?? policies.en;
-  const date = new Intl.DateTimeFormat(lang, { dateStyle: 'long', timeZone: 'UTC' }).format(
-    parseDate(updated),
-  );
+  const date = dateFormat({ dateStyle: 'long' })(parseDate(updated));
   return (
     <article className={card()}>
       <h1 className="mb-1 mt-2 text-2xl font-bold">{p.title}</h1>

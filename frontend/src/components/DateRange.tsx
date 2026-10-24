@@ -15,7 +15,7 @@ import {
   Popover,
   RangeCalendar,
 } from 'react-aria-components';
-import { isoWeek, parseDate as parseUtc } from '../lib/dates';
+import { isoWeek } from '../lib/dates';
 import { locale, t } from '../lib/i18n';
 
 /** A range of YYYY-MM-DD strings, the format the API uses. */
@@ -39,7 +39,7 @@ const toDate = (s?: string): CalendarDate | undefined => (s ? parseDate(s) : und
 export function monthWeeks(first: CalendarDate): number[] {
   const monday = startOfWeek(first, locale, 'mon');
   return Array.from({ length: getWeeksInMonth(first, locale, 'mon') }, (_, i) =>
-    isoWeek(parseUtc(monday.add({ weeks: i }).toString())),
+    isoWeek(monday.add({ weeks: i })),
   );
 }
 

@@ -1,3 +1,4 @@
+import { getLocalTimeZone, parseDate, today } from '@internationalized/date';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { AddPerson } from '../components/AddPerson';
@@ -6,8 +7,8 @@ import { PersonCard } from '../components/PersonCard';
 import { Timeline } from '../components/Timeline';
 import { Button, card } from '../components/ui';
 import { ApiError, api, errCode } from '../lib/api';
-import { addMonths, todayLocal } from '../lib/dates';
-import { lang, t, tError } from '../lib/i18n';
+import { dateFormat } from '../lib/dates';
+import { t, tError } from '../lib/i18n';
 import { loadMine, saveMine } from '../lib/mine';
 import { navigate } from '../lib/navigate';
 
@@ -33,12 +34,11 @@ export function DocPage({ id }: { id: string }) {
   if (!q.data) return <p>{q.error ? tError(errCode(q.error)) : t('loading')}</p>;
 
   const doc = q.data;
-  const fmt = new Intl.DateTimeFormat(lang, { dateStyle: 'medium', timeZone: 'UTC' });
-  const d = (s: string) => fmt.format(new Date(`${s}T00:00:00Z`));
+  const fmt = dateFormat({ dateStyle: 'medium' });
+  const d = (s: string) => fmt(parseDate(s));
   const readOnly = doc.archived;
   // Mirrors the backend's limits: no past vacations, none starting over 18 months ahead.
-  const today = todayLocal();
-  const lastStart = addMonths(today, 18);
+  const now = today(getLocalTimeZone());
 
   const confirmOthers = (pid: number, action: () => void) =>
     mine.has(pid) ? action() : setPending(() => action);
@@ -58,8 +58,8 @@ export function DocPage({ id }: { id: string }) {
             person={p}
             mine={mine.has(p.id)}
             readOnly={readOnly}
-            min={today}
-            max={lastStart}
+            min={now.toString()}
+            max={now.add({ months: 18 }).toString()}
             format={d}
             onChange={refresh}
             confirmEdit={(action) => confirmOthers(p.id, action)}

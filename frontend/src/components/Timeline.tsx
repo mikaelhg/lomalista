@@ -1,7 +1,8 @@
+import { parseDate } from '@internationalized/date';
 import { useMemo } from 'react';
 import type { Doc } from '../lib/api';
-import { addDays, diffDays, formatDate, isoWeek, parseDate, vacationSpan, weekday } from '../lib/dates';
-import { lang, t } from '../lib/i18n';
+import { dateFormat, diffDays, isoWeek, vacationSpan, weekday } from '../lib/dates';
+import { t } from '../lib/i18n';
 
 const DAY_W = 16;
 
@@ -15,7 +16,7 @@ export function Timeline({ doc, mine }: { doc: Doc; mine: Set<number> }) {
     if (!span) return { days: [], counts: [], weeks: [], months: [] };
     const { start } = span;
     const n = diffDays(start, span.end) + 1;
-    const days = Array.from({ length: n }, (_, i) => addDays(start, i));
+    const days = Array.from({ length: n }, (_, i) => start.add({ days: i }));
     const counts = new Array<number>(n).fill(0);
     for (const p of doc.people)
       for (const v of p.vacations) {
@@ -27,11 +28,11 @@ export function Timeline({ doc, mine }: { doc: Doc; mine: Set<number> }) {
       .map((d, i) => ({ d, i }))
       .filter(({ d, i }) => weekday(d) === 0 || i === 0)
       .map(({ d, i }) => ({ i, week: isoWeek(d) }));
-    const fmt = new Intl.DateTimeFormat(lang, { month: 'short', timeZone: 'UTC' });
+    const fmt = dateFormat({ month: 'short' });
     const months = days
       .map((d, i) => ({ d, i }))
-      .filter(({ d, i }) => d.getUTCDate() === 1 || i === 0)
-      .map(({ d, i }) => ({ i, label: fmt.format(d) }));
+      .filter(({ d, i }) => d.day === 1 || i === 0)
+      .map(({ d, i }) => ({ i, label: fmt(d) }));
     return { days, counts, weeks, months };
   }, [doc, span]);
 
@@ -39,7 +40,7 @@ export function Timeline({ doc, mine }: { doc: Doc; mine: Set<number> }) {
   const { start } = span;
   const total = Math.max(doc.people.length, 1);
   const width = days.length * DAY_W;
-  const dayFmt = new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', timeZone: 'UTC' });
+  const dayFmt = dateFormat({ day: 'numeric', month: 'short' });
 
   return (
     // biome-ignore lint/a11y/useSemanticElements: a fieldset would bring unwanted default styling
@@ -91,7 +92,7 @@ export function Timeline({ doc, mine }: { doc: Doc; mine: Set<number> }) {
                     key={v.id}
                     className={`absolute top-[.3rem] h-[1.15rem] rounded-sm ${mine.has(p.id) ? 'bg-bar-mine' : 'bg-bar'}`}
                     style={{ left: a * DAY_W, width: len * DAY_W }}
-                    title={`${p.name}: ${dayFmt.format(parseDate(v.start))} – ${dayFmt.format(parseDate(v.end))}`}
+                    title={`${p.name}: ${dayFmt(parseDate(v.start))} – ${dayFmt(parseDate(v.end))}`}
                   />
                 );
               })}
@@ -100,7 +101,7 @@ export function Timeline({ doc, mine }: { doc: Doc; mine: Set<number> }) {
           <div className={`${rowBox} relative border-t border-line`} style={{ width }}>
             {counts.map((c, i) => (
               <div
-                key={formatDate(days[i])}
+                key={days[i].toString()}
                 className="absolute top-0 h-full text-center text-[.65rem] leading-7 text-fg"
                 style={{
                   left: i * DAY_W,
@@ -109,7 +110,7 @@ export function Timeline({ doc, mine }: { doc: Doc; mine: Set<number> }) {
                     ? `color-mix(in srgb, var(--warn) ${Math.round((c / total) * 100)}%, transparent)`
                     : undefined,
                 }}
-                title={`${dayFmt.format(days[i])}: ${c}`}
+                title={`${dayFmt(days[i])}: ${c}`}
               >
                 {c || ''}
               </div>
