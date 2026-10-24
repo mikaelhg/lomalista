@@ -1,4 +1,4 @@
-import { type CalendarDate, parseDate } from '@internationalized/date';
+import { type CalendarDate, getWeeksInMonth, parseDate, startOfWeek } from '@internationalized/date';
 import {
   Button,
   CalendarCell,
@@ -15,7 +15,8 @@ import {
   Popover,
   RangeCalendar,
 } from 'react-aria-components';
-import { locale } from '../lib/i18n';
+import { isoWeek, parseDate as parseUtc } from '../lib/dates';
+import { locale, t } from '../lib/i18n';
 
 /** A range of YYYY-MM-DD strings, the format the API uses. */
 export interface Range {
@@ -33,6 +34,14 @@ interface Props {
 }
 
 const toDate = (s?: string): CalendarDate | undefined => (s ? parseDate(s) : undefined);
+
+/** ISO week numbers for the rows of the month starting at `first`. */
+export function monthWeeks(first: CalendarDate): number[] {
+  const monday = startOfWeek(first, locale, 'mon');
+  return Array.from({ length: getWeeksInMonth(first, locale, 'mon') }, (_, i) =>
+    isoWeek(parseUtc(monday.add({ weeks: i }).toString())),
+  );
+}
 
 const segment =
   'rounded-sm px-px tabular-nums outline-none data-focused:bg-accent data-focused:text-accent-fg data-placeholder:text-muted';
@@ -74,18 +83,33 @@ export function DateRange({ label, value, onChange, min, max, required }: Props)
         <Popover className="rounded-lg border border-line bg-card p-3 shadow-lg">
           <Dialog className="outline-none">
             <RangeCalendar>
-              <header className="mb-2 flex items-center justify-between gap-2">
-                <Button slot="previous" className={navButton}>
-                  ‹
-                </Button>
-                <Heading className="font-bold" />
-                <Button slot="next" className={navButton}>
-                  ›
-                </Button>
-              </header>
-              <CalendarGrid className="border-collapse [&_th]:pb-1 [&_th]:text-xs [&_th]:font-normal [&_th]:text-muted">
-                {(date) => <CalendarCell date={date} className={cell} />}
-              </CalendarGrid>
+              {({ state }) => (
+                <>
+                  <header className="mb-2 flex items-center justify-between gap-2">
+                    <Button slot="previous" className={navButton}>
+                      ‹
+                    </Button>
+                    <Heading className="font-bold" />
+                    <Button slot="next" className={navButton}>
+                      ›
+                    </Button>
+                  </header>
+                  <div className="flex gap-1">
+                    {/* Week numbers are visual only; the grid itself carries the dates for assistive tech. */}
+                    <div aria-hidden="true" className="text-xs text-muted">
+                      <div className="flex h-6 items-start justify-center">{t('weekShort')}</div>
+                      {monthWeeks(state.visibleRange.start as CalendarDate).map((w) => (
+                        <div key={w} className="flex h-9 w-7 items-center justify-center">
+                          {w}
+                        </div>
+                      ))}
+                    </div>
+                    <CalendarGrid className="border-collapse [&_td]:p-0 [&_th]:h-6 [&_th]:p-0 [&_th]:align-top [&_th]:text-xs [&_th]:font-normal [&_th]:text-muted">
+                      {(date) => <CalendarCell date={date} className={cell} />}
+                    </CalendarGrid>
+                  </div>
+                </>
+              )}
             </RangeCalendar>
           </Dialog>
         </Popover>
