@@ -1,0 +1,2 @@
+# jactionlint settings for the GitHub workflows. The Forgejo workflow uses .forgejo/jactionlint.yaml.
+platform: github

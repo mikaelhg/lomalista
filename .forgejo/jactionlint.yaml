@@ -1,0 +1,5 @@
+# jactionlint settings for the Forgejo workflows:
+# mise exec -- jactionlint -c .forgejo/jactionlint.yaml .forgejo/workflows/*.yml
+platform: forgejo
+self-hosted-runner:
+  labels: [docker]

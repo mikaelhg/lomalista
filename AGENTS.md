@@ -33,6 +33,12 @@ authentication or authorization: the unguessable URL is the only access control.
   (keep the tag in sync with `mise.toml`) and pins Rust in `RUST_VERSION` (local toolchains are not
   pinned). The frontend job runs in `node:24-alpine`, where `pnpm/setup` installs pnpm from
   `packageManager`, Node from `devEngines.runtime`, and the dependencies.
+- GitHub Actions: `.github/workflows/test.yml` runs the checks on pull requests; `build.yml` builds the
+  release binary and `frontend/dist` on pushes to `main` and uploads them as artifacts. Same Rust pin
+  and `pnpm/setup` use as the Forgejo workflow; keep the two in step.
+- Lint workflows with jactionlint (pinned in `mise.toml`, with shellcheck for `run:` scripts): `jactionlint`
+  for `.github` (config `.github/jactionlint.yaml`) and
+  `jactionlint -c .forgejo/jactionlint.yaml .forgejo/workflows/*.yml` for Forgejo.
 
 ## Code search
 - Text: use ripgrep (`rg`) for literal strings, translation keys, error codes, comments, and config.

@@ -5,34 +5,51 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     runs-on: docker
+    # Installing Rust and compiling every dependency happens on each run: there is no cache
+    timeout-minutes: 30
     # actions/checkout needs Node in the container; Rust is installed on top
     container:
-      image: node:24.21.0-bookworm
+      image: node:24.21.0-bookworm@sha256:3d27e5c11e5786e309ec3e03f93ae536eb36e6e5eb3714d5eb3300a36157add0
     env:
       # Pinned so a new Rust release cannot break the build with new clippy lints
       RUST_VERSION: "1.98.1"
+      RUSTUP_VERSION: "1.29.2"
+      RUSTUP_SHA256: "5be191e8c70a5007074254cb74d78dbfdd25cd5a61c27de7b8e5410122ec24f4"
       CARGO_TERM_COLOR: always
     defaults:
       run:
         working-directory: backend
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install Rust
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
-            | sh -s -- -y --profile minimal --default-toolchain "$RUST_VERSION" --component clippy
+          url="https://static.rust-lang.org/rustup/archive/$RUSTUP_VERSION/x86_64-unknown-linux-gnu/rustup-init"
+          curl --proto '=https' --tlsv1.2 -sSf -o /tmp/rustup-init "$url"
+          echo "$RUSTUP_SHA256  /tmp/rustup-init" | sha256sum -c -
+          chmod +x /tmp/rustup-init
+          /tmp/rustup-init -y --profile minimal --default-toolchain "$RUST_VERSION" --component clippy
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - run: cargo test --locked
       - run: cargo clippy --all-targets --locked -- -D warnings
 
   frontend:
     runs-on: docker
+    timeout-minutes: 15
     # Only runs the actions: pnpm/setup installs the Node version from devEngines.runtime
     container:
-      image: node:24-alpine
+      image: node:24-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53
     defaults:
       run:
         working-directory: frontend
@@ -42,6 +59,8 @@ jobs:
         run: apk add --no-cache git
         working-directory: /
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: pnpm/setup@a0881977cd8ea73b1ed212236c99ca10dcc80cf4 # v3.1.1
         with:
           working-directory: frontend
